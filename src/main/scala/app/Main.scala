@@ -2,10 +2,12 @@ package app
 
 import com.typesafe.scalalogging.Logger
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import scopt.OParser
 
-import java.nio.file.Paths
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+import scala.io.Source
+import scala.util.Using
 
 object Main extends App {
   val logger = Logger("diary-generator")
@@ -28,13 +30,17 @@ object Main extends App {
     )
   }
 
+  def templateFormatter(template: String): String = {
+    val now = DateTime.now()
+    template.replaceAll("%TODAY%", Format.ymd(now))
+  }
+
   def init(baseDirectoryPath: String, templateFilePath: String, dt: DateTime): Unit = {
-    val dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
     val baseDir = Paths.get(baseDirectoryPath)
 
     val templateFile = Paths.get(templateFilePath).toFile
 
-    val targetDirPath = baseDir.resolve(s"${dateTimeFormatter.print(dt)}").toAbsolutePath
+    val targetDirPath = baseDir.resolve(Format.ymd(dt)).toAbsolutePath
     val targetDir = targetDirPath.toFile
     val targetFilePath = targetDirPath.resolve(templateFile.getName)
     val targetFile = targetFilePath.toFile
@@ -51,8 +57,17 @@ object Main extends App {
         logger.info(s"already exist : ${targetFilePath.toString}")
       } else {
         logger.info(s"create file : ${targetFilePath.toString}")
-        // todo テンプレートファイルに書式を設定できるようにする
-        targetFile.createNewFile()
+
+        Using(Source.fromFile(templateFile)) { source => source.mkString }.fold(
+          err => {
+            logger.error("can't open template file", err)
+          },
+          template => {
+            val formattedTemplate = templateFormatter(template)
+            targetFile.createNewFile()
+            Files.write(targetFilePath, formattedTemplate.getBytes(StandardCharsets.UTF_8))
+          }
+        )
       }
     } else {
       logger.error("template file not found")
