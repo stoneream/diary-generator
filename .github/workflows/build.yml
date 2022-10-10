@@ -6,19 +6,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: "11"
-          distribution: "zulu"
-          cache: sbt
-      - name: Build
-        shell: bash
-        run: sbt -v +assembly
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          path: "diary-generator/target/scala-2.13/diary-generator.jar"
-          name: "diary-generator.jar"
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: "11"
+        distribution: "zulu"
+        cache: sbt
+    - name: Build
+      shell: bash
+      run: sbt -v +assembly
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        path: "diary-generator/target/scala-2.13/diary-generator.jar"
+        name: "diary-generator.jar"
