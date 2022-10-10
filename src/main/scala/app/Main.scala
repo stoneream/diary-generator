@@ -1,13 +1,20 @@
 package app
 
+import com.typesafe.scalalogging.Logger
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import scopt.OParser
 
+import java.nio.file.Paths
+
 object Main extends App {
+  val logger = Logger("diary-generator")
+
   val parser = {
     val builder = OParser.builder[Config]
     import builder._
     OParser.sequence(
-      opt[String]("target-path").required().action((targetPath, config) => config.copy(targetPath = targetPath)),
+      opt[String]("base-directory-path").required().action((baseDirectoryPath, config) => config.copy(baseDirectoryPath = baseDirectoryPath)),
       cmd("init")
         .action((_, config) => config.copy(mode = "init"))
         .children(
@@ -21,15 +28,47 @@ object Main extends App {
     )
   }
 
+  def init(baseDirectoryPath: String, templateFilePath: String, dt: DateTime): Unit = {
+    val dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val baseDir = Paths.get(baseDirectoryPath)
+
+    val templateFile = Paths.get(templateFilePath).toFile
+
+    val targetDirPath = baseDir.resolve(s"${dateTimeFormatter.print(dt)}").toAbsolutePath
+    val targetDir = targetDirPath.toFile
+    val targetFilePath = targetDirPath.resolve(templateFile.getName)
+    val targetFile = targetFilePath.toFile
+
+    if (templateFile.exists()) {
+      if (targetDir.exists()) {
+        logger.info(s"already exist : ${targetDirPath.toString}")
+      } else {
+        logger.info(s"make directory : ${targetDirPath.toString}")
+        targetDir.mkdirs()
+      }
+
+      if (targetFile.exists()) {
+        logger.info(s"already exist : ${targetFilePath.toString}")
+      } else {
+        logger.info(s"create file : ${targetFilePath.toString}")
+        // todo テンプレートファイルに書式を設定できるようにする
+        targetFile.createNewFile()
+      }
+    } else {
+      logger.error("template file not found")
+    }
+  }
+
   OParser
     .parse(parser, args, Config())
     .fold {
       // do nothing
     } { config =>
       (config.mode, config.templatePathOpt, config.startsWithOpt) match {
-        case ("init", Some(_), _) => ???
-        case ("archive", _, Some(_)) => ???
-        case _ => ???
+        case ("init", Some(templateFilePath), _) =>
+          init(config.baseDirectoryPath, templateFilePath, DateTime.now())
+        case ("archive", _, Some(_)) => ??? // todo impl
+        case _ => ??? // todo impl
       }
     }
 }
