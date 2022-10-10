@@ -20,7 +20,7 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
-        path: "$GITHUB_WORKSPACE/target/scala-2.13/diary-generator.jar"
+        path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
         name: "diary-generator.jar"
 
 # -- memo --
