@@ -58,7 +58,7 @@ object Main extends App {
       } else {
         logger.info(s"create file : ${targetFilePath.toString}")
 
-        Using(Source.fromFile(templateFile)) { source => source.mkString }.fold(
+        Using(Source.fromFile(templateFile, "UTF-8", 4096)) { source => source.mkString }.fold(
           err => {
             logger.error("can't open template file", err)
           },
