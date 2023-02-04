@@ -10,7 +10,7 @@ import scala.io.Source
 import scala.util.Using
 
 object DiaryInitializer {
-  private val logger = Logger(classOf[DiaryArchiver])
+  private val logger = Logger(DiaryInitializer.getClass)
 
   /**
    * @param baseDirectory
@@ -18,7 +18,7 @@ object DiaryInitializer {
    * @param now
    * @return Either[ErrorReason, (TemplateFile, TargetFile)
    */
-  def completeDirectory(baseDirectory: String, templateFilePath: String, now: DateTime): Either[String, (File, File)] = {
+  private def completeDirectory(baseDirectory: String, templateFilePath: String, now: DateTime): Either[String, (File, File)] = {
     val baseDir = Paths.get(baseDirectory)
 
     val templateFile = Paths.get(templateFilePath).toFile

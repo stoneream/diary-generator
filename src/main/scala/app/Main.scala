@@ -31,7 +31,8 @@ object Main extends App {
       (config.mode, config.templatePathOpt, config.startsWithOpt) match {
         case ("init", Some(templateFilePath), _) =>
           DiaryInitializer.init(config.baseDirectoryPath, templateFilePath, DateTime.now)
-        case ("archive", _, Some(_)) => ??? // todo impl
+        case ("archive", _, Some(startsWith)) =>
+          DiaryArchiver.archive(config.baseDirectoryPath, startsWith)
         case _ => ??? // todo impl
       }
     }
