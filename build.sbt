@@ -1,5 +1,5 @@
 ThisBuild / scalaVersion := "2.13.8"
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.2.0-SNAPSHOT"
 ThisBuild / organization := "com.github.stoneream"
 
 lazy val root = (project in file(".")).settings(
