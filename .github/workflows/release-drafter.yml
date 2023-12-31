@@ -33,17 +33,8 @@ jobs:
         uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
-          asset_name: diary-generator.jar
-          asset_content_type: application/java-archive
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
-          name: "diary-generator.jar" # TODO ファイル名にバージョンを含めたい
+          name: "diary-generator.jar" # TODO バージョン名をファイル名に含める
