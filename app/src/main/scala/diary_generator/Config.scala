@@ -1,4 +1,4 @@
-package app
+package diary_generator
 
 /**
  * @param mode 動作モード

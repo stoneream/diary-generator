@@ -1,4 +1,4 @@
-package app
+package diary_generator
 
 import com.typesafe.scalalogging.Logger
 import org.joda.time.DateTime

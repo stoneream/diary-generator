@@ -1,4 +1,4 @@
-package app
+package diary_generator
 
 import org.joda.time.DateTime
 import scopt.OParser

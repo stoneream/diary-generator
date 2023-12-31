@@ -29,7 +29,6 @@ jobs:
         shell: bash
         run: sbt -v +assembly
       - name: Create Release Draft
-        id: create_release_draft
         uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
