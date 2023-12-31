@@ -4,3 +4,15 @@ template: |
   ## Changes
 
   $CHANGES
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
