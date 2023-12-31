@@ -42,3 +42,8 @@ jobs:
           asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
           asset_name: diary-generator.jar
           asset_content_type: application/java-archive
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
+          name: "diary-generator.jar" # TODO ファイル名にバージョンを含めたい
