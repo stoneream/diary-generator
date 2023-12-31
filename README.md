@@ -14,7 +14,7 @@ java -jar bin/diary-generator.jar archive --base-directory ./diary --starts-with
 
 ## download
 
-[Actions · stoneream/diary-generator](https://github.com/stoneream/diary-generator/actions)
+[Releases · stoneream/diary-generator](https://github.com/stoneream/diary-generator/releases)
 
 ## memo
 
