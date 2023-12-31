@@ -17,6 +17,28 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@v5
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: "11"
+          distribution: "zulu"
+          cache: sbt
+      - name: Build
+        shell: bash
+        run: sbt -v +assembly
+      - name: Create Release Draft
+        id: create_release_draft
+        uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
+          asset_name: diary-generator.jar
+          asset_content_type: application/java-archive
