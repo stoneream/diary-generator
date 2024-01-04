@@ -19,3 +19,4 @@ java -jar bin/diary-generator.jar archive --base-directory ./diary --starts-with
 ## memo
 
 テンプレートファイルとディレクトリの名前は合わせたほうが扱いやすい。
+
