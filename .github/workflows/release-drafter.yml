@@ -38,7 +38,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           upload_url:  ${{ steps.create_release_draft.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/scala-2.12/diary-generator.jar
+          asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
           asset_name: "diary-generator.jar" # TODO バージョン名をファイル名に含める
           asset_content_type: application/java-archive
           overwrite: true # すでに存在する場合は上書き
