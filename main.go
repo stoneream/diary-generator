@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,25 +21,28 @@ func (*initCmd) Synopsis() string { return "Initialize a diary" }
 func (*initCmd) Usage() string {
 	return `init:
 	Initialize a diary.
+		--base-directory: base directory path
+		--template-file: template file path
 `
 }
 func (p *initCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.baseDirectory, "base-directory", "", "base directory")
 	f.StringVar(&p.templateFile, "template-file", "", "template file path")
 }
+
 func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	if p.baseDirectory == "" || p.templateFile == "" {
+		log.Println("Error: --base-directory and --template-file are required")
 		return subcommands.ExitUsageError
 	}
 
 	now := time.Now()
-	targetDirName := now.Format("2006-01-02")
-	templateFileName := filepath.Base(p.templateFile)
-	targetFilePath := filepath.Join(p.baseDirectory, targetDirName, templateFileName)
+	targetFilePath := filepath.Join(p.baseDirectory, now.Format("2006-01-02"), filepath.Base(p.templateFile))
 
 	// テンプレートファイルの存在チェック
-	_, err := os.Stat(templateFileName)
+	_, err := os.Stat(p.templateFile)
 	if err != nil {
+		log.Println("Error: template file not found:", p.templateFile)
 		return subcommands.ExitFailure
 	}
 
@@ -48,27 +52,35 @@ func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		// ディレクトリが存在しない場合は作成
 		err = os.MkdirAll(filepath.Dir(targetFilePath), 0755)
 		if err != nil {
+			log.Println("Error: failed to create directory:", err)
 			return subcommands.ExitFailure
 		}
+	} else {
+		log.Println("Error: directory already exists:", filepath.Dir(targetFilePath))
+		return subcommands.ExitFailure
 	}
 
 	// テンプレートファイルをコピー
 	input, err := os.ReadFile(p.templateFile)
 	if err != nil {
+		log.Println("Error: failed to read template file:", err)
 		return subcommands.ExitFailure
 	}
 
 	output, err := os.Create(targetFilePath)
 	if err != nil {
+		log.Println("Error: failed to create target file:", err)
 		return subcommands.ExitFailure
 	}
 	defer output.Close()
 
 	_, err = output.Write(input)
 	if err != nil {
+		log.Println("Error: failed to write to target file:", err)
 		return subcommands.ExitFailure
 	}
 
+	log.Println("Diary initialized successfully at", targetFilePath)
 	return subcommands.ExitSuccess
 }
 
