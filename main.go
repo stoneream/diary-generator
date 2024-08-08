@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/subcommands"
@@ -37,7 +38,8 @@ func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 
 	now := time.Now()
-	targetFilePath := filepath.Join(p.baseDirectory, now.Format("2006-01-02"), filepath.Base(p.templateFile))
+	ymdNow := now.Format("2006-01-02")
+	targetFilePath := filepath.Join(p.baseDirectory, ymdNow, filepath.Base(p.templateFile))
 
 	// テンプレートファイルの存在チェック
 	_, err := os.Stat(p.templateFile)
@@ -67,6 +69,8 @@ func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitFailure
 	}
 
+	templating := strings.ReplaceAll(string(input), "%TODAY%", ymdNow)
+
 	output, err := os.Create(targetFilePath)
 	if err != nil {
 		log.Println("Error: failed to create target file:", err)
@@ -74,7 +78,7 @@ func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 	defer output.Close()
 
-	_, err = output.Write(input)
+	_, err = output.Write([]byte(templating))
 	if err != nil {
 		log.Println("Error: failed to write to target file:", err)
 		return subcommands.ExitFailure
