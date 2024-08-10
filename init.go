@@ -1,4 +1,4 @@
-package init
+package main
 
 import (
 	"context"
@@ -12,26 +12,26 @@ import (
 	"github.com/google/subcommands"
 )
 
-type initCmd struct {
+type InitCmd struct {
 	baseDirectory string
 	templateFile  string
 }
 
-func (*initCmd) Name() string     { return "init" }
-func (*initCmd) Synopsis() string { return "Initialize a diary" }
-func (*initCmd) Usage() string {
+func (*InitCmd) Name() string     { return "init" }
+func (*InitCmd) Synopsis() string { return "Initialize a diary" }
+func (*InitCmd) Usage() string {
 	return `init:
 	Initialize a diary.
 		--base-directory: base directory path
 		--template-file: template file path
 `
 }
-func (p *initCmd) SetFlags(f *flag.FlagSet) {
+func (p *InitCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.baseDirectory, "base-directory", "", "base directory")
 	f.StringVar(&p.templateFile, "template-file", "", "template file path")
 }
 
-func (p *initCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (p *InitCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	if p.baseDirectory == "" || p.templateFile == "" {
 		log.Println("Error: --base-directory and --template-file are required")
 		return subcommands.ExitUsageError

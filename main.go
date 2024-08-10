@@ -2,15 +2,13 @@ package main
 
 import (
 	"context"
-	"diary-generator/cmd/init"
 	"flag"
-	"os"
-
 	"github.com/google/subcommands"
+	"os"
 )
 
 func main() {
-	subcommands.Register(&init.InitCmd{}, "")
+	subcommands.Register(&InitCmd{}, "")
 
 	flag.Parse()
 	ctx := context.Background()
