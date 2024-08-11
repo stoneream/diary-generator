@@ -6,6 +6,7 @@ on:
       - main
     types:
       - closed
+  push:
 
 permissions:
   contents: read
@@ -19,26 +20,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Setup JDK
-        uses: actions/setup-java@v3
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          java-version: "11"
-          distribution: "zulu"
-          cache: sbt
-      - name: Build
-        shell: bash
-        run: sbt -v +assembly
-      - name: Create Release Draft
-        id: create_release_draft
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Assets
-        uses: shogo82148/actions-upload-release-asset@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          upload_url:  ${{ steps.create_release_draft.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
-          asset_name: "diary-generator.jar" # TODO バージョン名をファイル名に含める
-          asset_content_type: application/java-archive
-          overwrite: true # すでに存在する場合は上書き
+          go-version: "1.22.x"
+      - name: Install dependencies
+        run: go get .
+      - name: Build for Windows
+        run: GOOS=windows GOARCH=amd64 go build -o diary-generator.exe .
+      # TODO Linux macOS (intel and arm)
+      # - name: Create Release Draft
+      #   id: create_release_draft
+      #   uses: release-drafter/release-drafter@v5
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload Assets
+      #   uses: shogo82148/actions-upload-release-asset@v1
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
+      #     asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
+      #     asset_name: "diary-generator.jar" # TODO バージョン名をファイル名に含める
+      #     asset_content_type: application/java-archive
+      #     overwrite: true # すでに存在する場合は上書き
