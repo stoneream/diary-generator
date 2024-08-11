@@ -4,9 +4,9 @@ on:
   pull_request:
     branches:
       - main
+      - test
     types:
       - closed
-  push:
 
 permissions:
   contents: read
@@ -28,23 +28,40 @@ jobs:
         run: go get .
       - name: Build for Windows
         run: GOOS=windows GOARCH=amd64 go build -o diary-generator.exe .
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+      - name: Build for MacOS (Intel)
+        run: GOOS=darwin GOARCH=amd64 go build -o diary-generator-intel .
+      - name: Build for MacOS (Apple Silicon)
+        run: GOOS=darwin GOARCH=arm64 go build -o diary-generator-apple-silicon .
+      # TODO Linux
+      - name: Create Release Draft
+        id: create_release_draft
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Asset for Windows
+        uses: shogo82148/actions-upload-release-asset@v1
         with:
-          name: diary-generator.exe
-          path: diary-generator.exe
-      # TODO Linux macOS (intel and arm)
-      # - name: Create Release Draft
-      #   id: create_release_draft
-      #   uses: release-drafter/release-drafter@v5
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Upload Assets
-      #   uses: shogo82148/actions-upload-release-asset@v1
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
-      #     asset_path: ${{ github.workspace }}/target/scala-2.13/diary-generator.jar
-      #     asset_name: "diary-generator.jar" # TODO バージョン名をファイル名に含める
-      #     asset_content_type: application/java-archive
-      #     overwrite: true # すでに存在する場合は上書き
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/diary-generator.exe
+          asset_name: "diary-generator.exe"
+          asset_content_type: application/octet-stream
+          overwrite: true # すでに存在する場合は上書き
+      - name: Upload Asset for MacOS (Intel)
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/diary-generator-intel
+          asset_name: "diary-generator-intel"
+          asset_content_type: application/octet-stream
+          overwrite: true # すでに存在する場合は上書き
+      - name: Upload Asset for MacOS (Apple Silicon)
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: ${{ steps.create_release_draft.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/diary-generator-apple-silicon
+          asset_name: "diary-generator-apple-silicon"
+          asset_content_type: application/octet-stream
+          overwrite: true # すでに存在する場合は上書き
