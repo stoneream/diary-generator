@@ -9,6 +9,7 @@ import (
 
 func main() {
 	subcommands.Register(&InitCmd{}, "")
+	subcommands.Register(&ArchiveCmd{}, "")
 
 	flag.Parse()
 	ctx := context.Background()
