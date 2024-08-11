@@ -28,6 +28,11 @@ jobs:
         run: go get .
       - name: Build for Windows
         run: GOOS=windows GOARCH=amd64 go build -o diary-generator.exe .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: diary-generator.exe
+          path: diary-generator.exe
       # TODO Linux macOS (intel and arm)
       # - name: Create Release Draft
       #   id: create_release_draft
