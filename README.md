@@ -1,26 +1,24 @@
 # diary-generator
 
-## installation
-
-tbd
-
 ## usage
-
-tbd
 
 ```bash
 # init
 
-diary-generator init --base-directory ./diary --template-path bin/template/diary.md 
+java -jar bin/diary-generator.jar init --base-directory ./diary --template-path bin/template/diary.md 
 
 # archive
 
-diary-generator archive --base-directory ./diary --starts-with 2023-01
+java -jar bin/diary-generator.jar archive --base-directory ./diary --starts-with 2023-01
 ```
 
 ## Windowsのタスクスケジューラーに追加する例
 
-tbd
+`F:\Dropbox\memo` 以下に `.jar` と当リポジトリの `bin` を配置していることを前提とする。  
+
+```powershell
+schtasks /create /tn "Init Diary" /tr "F:\Dropbox\memo\bin\init.bat diary" /sc daily /st 07:00
+```
 
 ## download
 
@@ -29,3 +27,4 @@ tbd
 ## memo
 
 テンプレートファイルとディレクトリの名前は合わせたほうが扱いやすい。
+

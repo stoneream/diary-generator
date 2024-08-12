@@ -3,4 +3,3 @@ target/
 .bsp
 .metals
 .vscode
-metals.sbt
