@@ -1,12 +1,6 @@
 # diary-generator
 
-## installation
-
-tbd
-
 ## usage
-
-tbd
 
 ```bash
 # init
@@ -20,12 +14,12 @@ diary-generator archive --base-directory ./diary --starts-with 2023-01
 
 ## Windowsのタスクスケジューラーに追加する例
 
-tbd
+`F:\Dropbox\memo` 以下に当リポジトリの `bin` ディレクトリをコピーし、その中に `diary-generator.exe` がある前提の例。
+
+```powershell
+schtasks /create /tn "Init Diary" /tr "F:\Dropbox\memo\bin\init.bat diary" /sc daily /st 07:00
+```
 
 ## download
 
 [Releases · stoneream/diary-generator](https://github.com/stoneream/diary-generator/releases)
-
-## memo
-
-テンプレートファイルとディレクトリの名前は合わせたほうが扱いやすい。
