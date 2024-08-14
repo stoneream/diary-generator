@@ -9,4 +9,4 @@ if [ ! -e ./diary-generator ]; then
   exit 1
 fi
 
-./diary-generator init --base-directory-path ../$TARGET --template-path ./template/$TARGET.md
+./diary-generator init --base-directory ../$TARGET --template-file ./template/$TARGET.md

@@ -10,4 +10,4 @@ if [ ! -e ./diary-generator ]; then
   exit 1
 fi
 
-diary-generator archive --base-directory-path ../$TARGET --starts-with $STARTSWITH
+diary-generator archive --base-directory ../$TARGET --starts-with $STARTSWITH
