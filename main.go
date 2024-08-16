@@ -11,8 +11,8 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "diary",
-		Usage: "A new cli application",
+		Name:  "diary-generator",
+		Usage: "",
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
