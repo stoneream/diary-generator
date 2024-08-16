@@ -24,7 +24,7 @@ func (p *ArchiveCmd) Execute() error {
 		return err
 	}
 
-	err = complateArchiveDir(p.BaseDirectory)
+	err = complateArchiveDir(p.BaseDirectory, p.StartsWith)
 	if err != nil {
 		log.Println("Error: failed to create archive directory:", err)
 		return err
@@ -37,7 +37,7 @@ func (p *ArchiveCmd) Execute() error {
 	}
 
 	for _, targetDir := range targetDirs {
-		archiveDirPath := filepath.Join(p.BaseDirectory, "archive", targetDir.info.Name())
+		archiveDirPath := filepath.Join(p.BaseDirectory, "archive", p.StartsWith, targetDir.info.Name())
 		_, err := os.Stat(archiveDirPath)
 		if err == nil {
 			log.Println("Skip: already exists:", archiveDirPath)
@@ -57,15 +57,20 @@ func (p *ArchiveCmd) Execute() error {
 }
 
 // `--base-directory` 以下に存在する、`--starts-with` で指定された文字列で始まるディレクトリを取得する
-func getTargetDirPaths(BaseDirectory, StartsWith string) ([]targetDir, error) {
+func getTargetDirPaths(baseDirectory, StartsWith string) ([]targetDir, error) {
 	var targetDirPaths []targetDir
-	err := filepath.Walk(BaseDirectory, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(baseDirectory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
+		if path != baseDirectory && strings.Count(path, string(os.PathSeparator)) > strings.Count(baseDirectory, string(os.PathSeparator)) {
+			return filepath.SkipDir
+		}
+
 		if info.IsDir() {
 			if strings.HasPrefix(info.Name(), StartsWith) {
+				log.Println(path)
 				targetDirPaths = append(targetDirPaths, targetDir{path: path, info: info})
 			}
 		}
@@ -77,11 +82,11 @@ func getTargetDirPaths(BaseDirectory, StartsWith string) ([]targetDir, error) {
 }
 
 // `--base-directory` 以下に `archive` ディレクトリが存在しない場合は作成する
-func complateArchiveDir(BaseDirectory string) error {
-	archiveDirPath := filepath.Join(BaseDirectory, "archive")
+func complateArchiveDir(baseDirectory string, startsWith string) error {
+	archiveDirPath := filepath.Join(baseDirectory, "archive", startsWith)
 	_, err := os.Stat(archiveDirPath)
 	if err != nil {
-		err = os.Mkdir(archiveDirPath, 0755)
+		err = os.MkdirAll(archiveDirPath, 0755)
 		if err != nil {
 			return err
 		}
