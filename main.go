@@ -67,10 +67,11 @@ func main() {
 					targetYM := c.String("target-ym")
 
 					cmd := archive.ArchiveCmd{
-						BaseDirectory: config.BaseDirectory,
-						Name:          config.Name,
-						TargetYM:      targetYM,
-						TemplateFile:  config.TemplateFile,
+						BaseDirectory:         config.BaseDirectory,
+						Name:                  config.Name,
+						TargetYM:              targetYM,
+						TemplateFile:          config.TemplateFile,
+						EnabledArchiveSummary: config.EnabledArchiveSummary,
 					}
 
 					return cmd.Execute()
