@@ -43,6 +43,13 @@ func (p *ArchiveCmd) Execute() error {
 		return err
 	}
 
+	archiveAssetDirPath, err := p.complateArchiveAssetDir()
+	if err != nil {
+		log.Println("Error: failed to create archive asset directory:", err)
+		return err
+	}
+
+	// ファイルの移動 (markdown)
 	targetFiles, err := p.getTargetFiles()
 	if err != nil {
 		log.Println("Error: failed to get target directory paths:", err)
@@ -51,7 +58,6 @@ func (p *ArchiveCmd) Execute() error {
 
 	var archivedFilePaths []string
 	for _, targetFile := range targetFiles {
-		// ファイルの移動
 		moveTo := filepath.Join(archiveDirPath, targetFile.info.Name())
 
 		_, err := os.Stat(moveTo)
@@ -69,6 +75,31 @@ func (p *ArchiveCmd) Execute() error {
 		log.Println("Success: move directory:", targetFile.path, moveTo)
 
 		archivedFilePaths = append(archivedFilePaths, moveTo)
+	}
+
+	// ファイルの移動 (assets)
+	targetAssetFiles, err := p.getTargetAssetFiles()
+	if err != nil {
+		log.Println("Error: failed to get target asset directory paths:", err)
+		return err
+	}
+
+	for _, targetAssetFile := range targetAssetFiles {
+		moveTo := filepath.Join(archiveAssetDirPath, targetAssetFile.info.Name())
+
+		_, err := os.Stat(moveTo)
+		if err == nil {
+			log.Println("Skip: already exists:", moveTo)
+			continue
+		}
+
+		err = os.Rename(targetAssetFile.path, moveTo)
+		if err != nil {
+			log.Println("Error: failed to move asset directory:", targetAssetFile.path, moveTo)
+			return err
+		}
+
+		log.Println("Success: move asset directory:", targetAssetFile.path, moveTo)
 	}
 
 	// サマリの生成
@@ -201,9 +232,54 @@ func (p *ArchiveCmd) getTargetFiles() ([]targetFile, error) {
 	return targetDirPaths, err
 }
 
+func (p *ArchiveCmd) getTargetAssetFiles() ([]targetFile, error) {
+	var targetDirPaths []targetFile
+
+	// 対象年月の開始日時
+	startYMD, err := time.Parse("2006-01", p.TargetYM)
+	if err != nil {
+		return nil, err
+	}
+	startYMD = startYMD.AddDate(0, 0, 1)
+	// 対象年月の終了日時
+	endYMD := startYMD.AddDate(0, 1, -1)
+
+	assetDirPath := filepath.Join(p.BaseDirectory, "assets")
+	err = filepath.Walk(assetDirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path != assetDirPath && info.ModTime().After(startYMD) && info.ModTime().Before(endYMD) {
+			targetDirPaths = append(targetDirPaths, targetFile{path: path, info: info})
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return targetDirPaths, nil
+}
+
 // ベースディレクトリ以下に `archive` ディレクトリが存在しない場合は作成する
 func (p *ArchiveCmd) complateArchiveDir() (string, error) {
 	archiveDirPath := filepath.Join(p.BaseDirectory, "archive", p.TargetYM)
+	_, err := os.Stat(archiveDirPath)
+	if err != nil {
+		err = os.MkdirAll(archiveDirPath, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return archiveDirPath, nil
+}
+
+func (p *ArchiveCmd) complateArchiveAssetDir() (string, error) {
+	archiveDirPath := filepath.Join(p.BaseDirectory, "archive", p.TargetYM, "assets")
 	_, err := os.Stat(archiveDirPath)
 	if err != nil {
 		err = os.MkdirAll(archiveDirPath, 0755)

@@ -22,6 +22,16 @@ func (p *InitializeCmd) Execute() error {
 	targetFileName := fmt.Sprintf("%s_%s.md", p.Name, ymdNow) // e.g. diary_2024-01-01.md
 	targetFilePath := filepath.Join(p.BaseDirectory, targetFileName)
 
+	// アセットディレクトリの存在チェック & 作成
+	assetDir := filepath.Join(p.BaseDirectory, "assets")
+	if _, err := os.Stat(assetDir); os.IsNotExist(err) {
+		err := os.Mkdir(assetDir, 0755)
+		if err != nil {
+			log.Println("Error: failed to create asset directory:", err)
+			return err
+		}
+	}
+
 	// テンプレートファイルの存在チェック
 	_, err := os.Stat(p.TemplateFile)
 	if err != nil {
