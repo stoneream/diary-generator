@@ -52,8 +52,8 @@ func main() {
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "starts-with",
-						Usage:    "starts with string",
+						Name:     "target-ym",
+						Usage:    "target year and month (e.g. 2024-01)",
 						Required: true,
 					},
 				},
@@ -64,10 +64,15 @@ func main() {
 						return err
 					}
 
+					targetYM := c.String("target-ym")
+
 					cmd := archive.ArchiveCmd{
 						BaseDirectory: config.BaseDirectory,
-						StartsWith:    c.String("starts-with"), // TODO メタデータをもとにアーカイブする
+						Name:          config.Name,
+						TargetYM:      targetYM,
+						TemplateFile:  config.TemplateFile,
 					}
+
 					return cmd.Execute()
 				},
 			},
