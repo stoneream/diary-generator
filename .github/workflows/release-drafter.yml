@@ -27,10 +27,22 @@ jobs:
         run: go get .
       - name: Build for Windows
         run: GOOS=windows GOARCH=amd64 go build -o diary-generator_windows_amd64/diary-generator.exe diary-generator .
+      - name: Copy Batch File
+        run: |
+          cp bin/archive.bat diary-generator_windows_amd64/archive.bat
+          cp bin/init.bat diary-generator_windows_amd64/init.bat
       - name: Build for MacOS (Intel)
         run: GOOS=darwin GOARCH=amd64 go build -o diary-generator_darwin_amd64/diary-generator diary-generator .
+      - name: Copy Shell Script (Intel)
+        run: |
+          cp bin/archive.sh diary-generator_darwin_amd64/archive.sh
+          cp bin/init.sh diary-generator_darwin_amd64/init.sh
       - name: Build for MacOS (Apple Silicon)
         run: GOOS=darwin GOARCH=arm64 go build -o diary-generator_darwin_arm64/diary-generator diary-generator .
+      - name: Copy Shell Script (Apple Silicon)
+        run: |
+          cp bin/archive.sh diary-generator_darwin_arm64/archive.sh
+          cp bin/init.sh diary-generator_darwin_arm64/init.sh
       - name: Create Release Draft
         id: create_release_draft
         uses: release-drafter/release-drafter@v5
