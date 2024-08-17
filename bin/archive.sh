@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TARGET=$1
-STARTSWITH=$2
+CONFIG_FILE=$1
+TARGET_YM=$2
 
 cd $(dirname $0)
 
@@ -10,4 +10,4 @@ if [ ! -e ./diary-generator ]; then
   exit 1
 fi
 
-diary-generator archive --base-directory ../$TARGET --starts-with $STARTSWITH
+diary-generator --config $CONFIG_FILE archive --target-ym $TARGET_YM

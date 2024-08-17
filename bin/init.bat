@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set TARGET=%1
+set CONFIG_FILE=%1
 
 cd /d %~dp0
 
@@ -10,4 +10,4 @@ if not exist diary-generator.exe (
     exit /b 1
 )
 
-diary-generator.exe init --base-directory ..\%TARGET% --template-path .\template\%TARGET%.md
+diary-generator.exe --config %CONFIG_FILE% init
