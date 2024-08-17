@@ -36,6 +36,7 @@ func main() {
 					cmd := initialize.InitializeCmd{
 						BaseDirectory: config.BaseDirectory,
 						TemplateFile:  config.TemplateFile,
+						Name:          config.Name,
 					}
 					return cmd.Execute()
 				},
