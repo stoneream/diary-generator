@@ -25,12 +25,10 @@ enabledArchiveSummary: true
 
 ## Windowsのタスクスケジューラーに追加する例
 
-**TODO UPDATE**
-
-`F:\Dropbox\memo` 以下に当リポジトリの `bin` ディレクトリをコピーし、その中に `diary-generator.exe` がある前提の例。
+`F:\Dropbox\memo` 以下に当リポジトリの `bin` ディレクトリをコピー & 設定ファイルが配置済みである前提。
 
 ```powershell
-schtasks /create /tn "Init Diary" /tr "F:\Dropbox\memo\bin\init.bat diary" /sc daily /st 07:00
+schtasks /create /tn "Init Diary" /tr "F:\Dropbox\memo\bin\init.bat ./config.yaml" /sc daily /st 07:00
 ```
 
 ## download
