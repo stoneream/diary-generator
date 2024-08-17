@@ -3,6 +3,7 @@ package main
 import (
 	"diary-generator/cmd/archive"
 	"diary-generator/cmd/initialize"
+	"diary-generator/config"
 	"log"
 	"os"
 
@@ -20,20 +21,21 @@ func main() {
 				Usage:   "Initialize a diary",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "base-directory",
-						Usage:    "base directory path",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "template-file",
-						Usage:    "template file path",
+						Name:     "config",
+						Usage:    "config file path",
 						Required: true,
 					},
 				},
 				Action: func(c *cli.Context) error {
+					config, err := config.LoadFile(c.String("config"))
+
+					if err != nil {
+						return err
+					}
+
 					cmd := initialize.InitializeCmd{
-						BaseDirectory: c.String("base-directory"),
-						TemplateFile:  c.String("template-file"),
+						BaseDirectory: config.BaseDirectory,
+						TemplateFile:  config.TemplateFile,
 					}
 					return cmd.Execute()
 				},
@@ -44,8 +46,8 @@ func main() {
 				Usage:   "Archive a diary",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "base-directory",
-						Usage:    "base directory path",
+						Name:     "config",
+						Usage:    "config file path",
 						Required: true,
 					},
 					&cli.StringFlag{
@@ -55,9 +57,15 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
+					config, err := config.LoadFile(c.String("config"))
+
+					if err != nil {
+						return err
+					}
+
 					cmd := archive.ArchiveCmd{
-						BaseDirectory: c.String("base-directory"),
-						StartsWith:    c.String("starts-with"),
+						BaseDirectory: config.BaseDirectory,
+						StartsWith:    c.String("starts-with"), // TODO メタデータをもとにアーカイブする
 					}
 					return cmd.Execute()
 				},
