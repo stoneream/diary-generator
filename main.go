@@ -14,18 +14,18 @@ func main() {
 	app := &cli.App{
 		Name:  "diary-generator",
 		Usage: "",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "config",
+				Usage:    "config file path",
+				Required: true,
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
 				Aliases: []string{"i"},
 				Usage:   "Initialize a diary",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "config",
-						Usage:    "config file path",
-						Required: true,
-					},
-				},
 				Action: func(c *cli.Context) error {
 					config, err := config.LoadFile(c.String("config"))
 
@@ -46,11 +46,6 @@ func main() {
 				Aliases: []string{"a"},
 				Usage:   "Archive a diary",
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "config",
-						Usage:    "config file path",
-						Required: true,
-					},
 					&cli.StringFlag{
 						Name:     "target-ym",
 						Usage:    "target year and month (e.g. 2024-01)",
