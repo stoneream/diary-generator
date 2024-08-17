@@ -3,6 +3,7 @@ package main
 import (
 	"diary-generator/cmd/archive"
 	"diary-generator/cmd/initialize"
+	"diary-generator/config"
 	"log"
 	"os"
 
@@ -13,27 +14,29 @@ func main() {
 	app := &cli.App{
 		Name:  "diary-generator",
 		Usage: "",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:     "config",
+				Usage:    "config file path",
+				Required: true,
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
 				Aliases: []string{"i"},
 				Usage:   "Initialize a diary",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "base-directory",
-						Usage:    "base directory path",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "template-file",
-						Usage:    "template file path",
-						Required: true,
-					},
-				},
 				Action: func(c *cli.Context) error {
+					config, err := config.LoadFile(c.String("config"))
+
+					if err != nil {
+						return err
+					}
+
 					cmd := initialize.InitializeCmd{
-						BaseDirectory: c.String("base-directory"),
-						TemplateFile:  c.String("template-file"),
+						BaseDirectory: config.BaseDirectory,
+						TemplateFile:  config.TemplateFile,
+						Name:          config.Name,
 					}
 					return cmd.Execute()
 				},
@@ -44,21 +47,28 @@ func main() {
 				Usage:   "Archive a diary",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:     "base-directory",
-						Usage:    "base directory path",
-						Required: true,
-					},
-					&cli.StringFlag{
-						Name:     "starts-with",
-						Usage:    "starts with string",
+						Name:     "target-ym",
+						Usage:    "target year and month (e.g. 2024-01)",
 						Required: true,
 					},
 				},
 				Action: func(c *cli.Context) error {
-					cmd := archive.ArchiveCmd{
-						BaseDirectory: c.String("base-directory"),
-						StartsWith:    c.String("starts-with"),
+					config, err := config.LoadFile(c.String("config"))
+
+					if err != nil {
+						return err
 					}
+
+					targetYM := c.String("target-ym")
+
+					cmd := archive.ArchiveCmd{
+						BaseDirectory:         config.BaseDirectory,
+						Name:                  config.Name,
+						TargetYM:              targetYM,
+						TemplateFile:          config.TemplateFile,
+						EnabledArchiveSummary: config.EnabledArchiveSummary,
+					}
+
 					return cmd.Execute()
 				},
 			},

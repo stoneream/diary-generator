@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET=$1
+CONFIG_FILE=$1
 
 cd $(dirname $0)
 
@@ -9,4 +9,4 @@ if [ ! -e ./diary-generator ]; then
   exit 1
 fi
 
-./diary-generator init --base-directory ../$TARGET --template-file ./template/$TARGET.md
+./diary-generator --config $CONFIG_FILE init
