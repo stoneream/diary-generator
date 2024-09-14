@@ -1,11 +1,16 @@
 {
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
-  "golang": {
-    "enabled": true
-  },
   "postUpdateOptions": [
     "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchCategories": [
+        "golang"
+      ],
+      "enabled": true
+    }
   ]
 }
