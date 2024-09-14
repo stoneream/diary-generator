@@ -1,0 +1,11 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "golang": {
+    "enabled": true
+  },
+  "postUpdateOptions": [
+    "gomodTidy"
+  ]
+}

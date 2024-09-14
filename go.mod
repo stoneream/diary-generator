@@ -4,7 +4,7 @@ go 1.22.4
 
 require github.com/urfave/cli/v2 v2.27.4
 
-require github.com/BurntSushi/toml v1.3.2 // indirect
+require github.com/BurntSushi/toml v1.4.0 // indirect
 
 require (
 	github.com/adrg/frontmatter v0.2.0
