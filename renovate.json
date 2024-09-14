@@ -12,5 +12,6 @@
       ],
       "enabled": true
     }
-  ]
+  ],
+  "autodiscover": true
 }
