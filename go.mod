@@ -3,9 +3,8 @@ module diary-generator
 go 1.22.4
 
 require (
-	github.com/urfave/cli/v2 v2.27.4
+	github.com/urfave/cli/v2 v2.27.5
 	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require github.com/BurntSushi/toml v1.4.0 // indirect
