@@ -1,11 +1,11 @@
 name: Release Drafter
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - closed
+    paths:
+      - version.go
 
 permissions:
   contents: read
@@ -23,41 +23,30 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22.x"
+      - name: Extract version from version.go
+        id: extract_version
+        run: echo ::set-output name=version::$(grep -oP 'Version = "\K[^"]+' version.go)
       - name: Install dependencies
         run: go get .
       # Windows
       - name: Build for Windows
         run: GOOS=windows GOARCH=amd64 go build -o diary-generator_windows_amd64/diary-generator.exe diary-generator .
-      - name: Copy Batch File
-        run: |
-          cp bin/archive.bat diary-generator_windows_amd64/archive.bat
-          cp bin/init.bat diary-generator_windows_amd64/init.bat
       # MacOS (Intel)
       - name: Build for MacOS (Intel)
         run: GOOS=darwin GOARCH=amd64 go build -o diary-generator_darwin_amd64/diary-generator diary-generator .
-      - name: Copy Shell Script (Intel)
-        run: |
-          cp bin/archive.sh diary-generator_darwin_amd64/archive.sh
-          cp bin/init.sh diary-generator_darwin_amd64/init.sh
       # MacOS (Apple Silicon)
       - name: Build for MacOS (Apple Silicon)
         run: GOOS=darwin GOARCH=arm64 go build -o diary-generator_darwin_arm64/diary-generator diary-generator .
-      - name: Copy Shell Script (Apple Silicon)
-        run: |
-          cp bin/archive.sh diary-generator_darwin_arm64/archive.sh
-          cp bin/init.sh diary-generator_darwin_arm64/init.sh
       # Linux
       - name: Build for Linux
         run: GOOS=linux GOARCH=amd64 go build -o diary-generator_linux_amd64/diary-generator diary-generator .
-      - name: Copy Shell Script (Linux)
-        run: |
-          cp bin/archive.sh diary-generator_linux_amd64/archive.sh
-          cp bin/init.sh diary-generator_linux_amd64/init.sh
       - name: Create Release Draft
         id: create_release_draft
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ steps.extract_version.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Zip Assets
         run: |
           zip -r diary-generator_windows_amd64.zip diary-generator_windows_amd64
