@@ -1,4 +1,4 @@
-module diary-generator
+module github.com/stoneream/diary-generator/v2
 
 go 1.22.4
 
