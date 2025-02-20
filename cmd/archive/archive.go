@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/adrg/frontmatter"
-	"github.com/stoneream/diary-generator/data"
+	"github.com/stoneream/diary-generator/v2/data"
 )
 
 type ArchiveCmd struct {

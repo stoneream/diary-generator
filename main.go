@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/stoneream/diary-generator/cmd/archive"
-	"github.com/stoneream/diary-generator/cmd/initialize"
+	"github.com/stoneream/diary-generator/v2/cmd/archive"
+	"github.com/stoneream/diary-generator/v2/cmd/initialize"
 
 	"github.com/urfave/cli/v2"
 )
