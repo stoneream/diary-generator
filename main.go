@@ -1,11 +1,12 @@
 package main
 
 import (
-	"diary-generator/cmd/archive"
-	"diary-generator/cmd/initialize"
 	"log"
 	"os"
 	"time"
+
+	"github.com/stoneream/diary-generator/cmd/archive"
+	"github.com/stoneream/diary-generator/cmd/initialize"
 
 	"github.com/urfave/cli/v2"
 )

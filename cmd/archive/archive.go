@@ -1,13 +1,13 @@
 package archive
 
 import (
-	"diary-generator/data"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/adrg/frontmatter"
+	"github.com/stoneream/diary-generator/data"
 )
 
 type ArchiveCmd struct {
