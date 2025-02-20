@@ -2,27 +2,16 @@ package archive
 
 import (
 	"diary-generator/data"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
-	"time"
 
 	"github.com/adrg/frontmatter"
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/text"
 )
 
 type ArchiveCmd struct {
-	BaseDirectory         string
-	Name                  string
-	TargetYM              string
-	TemplateFile          string
-	EnabledArchiveSummary bool
+	TargetYM string
 }
 
 type targetFile struct {
@@ -31,181 +20,119 @@ type targetFile struct {
 }
 
 func (p *ArchiveCmd) Execute() error {
-	_, err := os.Stat(p.BaseDirectory)
+	currentDir, err := os.Getwd()
 	if err != nil {
-		log.Println("Error: base directory not found:", p.BaseDirectory)
 		return err
 	}
 
-	archiveDirPath, err := p.complateArchiveDir()
+	// 対象ファイル(markdown)の抽出
+	targetFiles, err := p.getTargetMarkdownFiles()
 	if err != nil {
-		log.Println("Error: failed to create archive directory:", err)
 		return err
 	}
-
-	archiveAssetDirPath, err := p.complateArchiveAssetDir()
-	if err != nil {
-		log.Println("Error: failed to create archive asset directory:", err)
-		return err
+	if len(targetFiles) == 0 {
+		log.Println("No target files.")
+		return nil
 	}
 
-	// ファイルの移動 (markdown)
-	targetFiles, err := p.getTargetFiles()
-	if err != nil {
-		log.Println("Error: failed to get target directory paths:", err)
-		return err
+	// 移動先(アーカイブディレクトリ)の作成
+	archiveDirPath := filepath.Join(currentDir, "archive", p.TargetYM)
+	if _, err := os.Stat(archiveDirPath); err != nil {
+		err = os.MkdirAll(archiveDirPath, 0755)
+		if err != nil {
+			log.Fatalf("failed to create archive directory: %v", err)
+		}
 	}
 
-	var archivedFilePaths []string
 	for _, targetFile := range targetFiles {
-		moveTo := filepath.Join(archiveDirPath, targetFile.info.Name())
-
-		_, err := os.Stat(moveTo)
-		if err == nil {
-			log.Println("Skip: already exists:", moveTo)
-			continue
-		}
-
-		err = os.Rename(targetFile.path, moveTo)
+		// ファイルの移動
+		archiveFilePath := filepath.Join(archiveDirPath, filepath.Base(targetFile.path))
+		err = os.Rename(targetFile.path, archiveFilePath)
 		if err != nil {
-			log.Println("Error: failed to move directory:", targetFile.path, moveTo)
-			return err
+			log.Fatalf("failed to move file: %v", err)
 		}
-
-		log.Println("Success: move directory:", targetFile.path, moveTo)
-
-		archivedFilePaths = append(archivedFilePaths, moveTo)
 	}
 
-	// ファイルの移動 (assets)
-	targetAssetFiles, err := p.getTargetAssetFiles()
-	if err != nil {
-		log.Println("Error: failed to get target asset directory paths:", err)
-		return err
-	}
-
-	for _, targetAssetFile := range targetAssetFiles {
-		moveTo := filepath.Join(archiveAssetDirPath, targetAssetFile.info.Name())
-
-		_, err := os.Stat(moveTo)
-		if err == nil {
-			log.Println("Skip: already exists:", moveTo)
-			continue
-		}
-
-		err = os.Rename(targetAssetFile.path, moveTo)
-		if err != nil {
-			log.Println("Error: failed to move asset directory:", targetAssetFile.path, moveTo)
-			return err
-		}
-
-		log.Println("Success: move asset directory:", targetAssetFile.path, moveTo)
-	}
-
-	// サマリの生成
-	if p.EnabledArchiveSummary {
-		// 各ファイルの目次を生成
-		var tocs []string
-		for _, archivedFilePath := range archivedFilePaths {
-			file, err := os.ReadFile(archivedFilePath)
+	// フォルダの移動 (assets)
+	// assets フォルダの存在チェック
+	assetsDirPath := filepath.Join(currentDir, "assets")
+	if _, err := os.Stat(assetsDirPath); err == nil {
+		// 移動先ディレクトリの作成
+		archiveAssetDirPath := filepath.Join(archiveDirPath, "assets")
+		if _, err := os.Stat(archiveAssetDirPath); err != nil {
+			err = os.MkdirAll(archiveAssetDirPath, 0755)
 			if err != nil {
-				log.Println("Error: failed to read file:", archivedFilePath)
-				return err
+				log.Fatalf("failed to create archive asset directory: %v", err)
 			}
-			filename := filepath.Base(archivedFilePath)
-
-			content := string(file)
-			toc, err := generateTOC(content)
-			if err != nil {
-				log.Println("Error: failed to generate TOC:", archivedFilePath)
-				return err
-			}
-
-			relativePath, err := filepath.Rel(archiveDirPath, archivedFilePath)
-			if err != nil {
-				log.Println("Error: failed to get relative path:", archivedFilePath)
-				return err
-			}
-
-			tocs = append(tocs, fmt.Sprintf("- [%s](%s)\n%s", filename, relativePath, addIntent(toc, 2)))
 		}
 
-		// サマリファイルの作成
-		summaryPath := filepath.Join(p.BaseDirectory, "archive", p.TargetYM, "summary.md")
-
-		if _, err := os.Stat(summaryPath); err == nil {
-			log.Println("Skip: already exists:", summaryPath)
-			return nil
-		}
-
-		outputFile, err := os.Create(summaryPath)
+		//フォルダの移動
+		archiveAssetsDirPath := filepath.Join(archiveDirPath, "assets")
+		err = os.Rename(assetsDirPath, archiveAssetsDirPath)
 		if err != nil {
-			log.Println("Error: failed to create summary file:", err)
-			return err
-		}
-		defer outputFile.Close()
-
-		// templating
-		metadata := data.Metadata{
-			Title: fmt.Sprintf("Archived Summary (%s)", p.Name),
-			Date:  time.Now().Format("2006-01-02 15:04:05"),
-		}
-		metadataYaml, err := metadata.String()
-		if err != nil {
-			log.Println("Error: failed to convert metadata to yaml:", err)
-			return err
-		}
-		data := map[string]interface{}{
-			"metadata": metadataYaml,
-			"toc":      strings.Join(tocs, "\n"),
-		}
-		tmpl, err := template.New("").Parse(`---
-{{ .metadata }}
----
-{{ .toc }}
-`)
-		if err != nil {
-			log.Println("Error: failed to parse template:", err)
-			return err
-		}
-
-		err = tmpl.Execute(outputFile, data)
-
-		if err != nil {
-			log.Println("Error: failed to execute template:", err)
-			return err
+			log.Fatalf("failed to move assets directory: %v", err)
 		}
 	}
 
 	return nil
 }
 
-func (p *ArchiveCmd) getTargetFiles() ([]targetFile, error) {
+func (p *ArchiveCmd) getTargetMarkdownFiles() ([]targetFile, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("failed to get current directory: %v", err)
+		return nil, err
+	}
+
+	currentDirName := filepath.Base(currentDir)
 	var targetDirPaths []targetFile
 
-	err := filepath.Walk(p.BaseDirectory, func(path string, info os.FileInfo, err error) error {
+	entries, err := os.ReadDir(currentDir)
+	if err != nil {
+		log.Fatalf("failed to read directory: %v", err)
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		path := filepath.Join(currentDir, entry.Name())
+		info, err := entry.Info()
 		if err != nil {
-			return err
+			log.Fatalf("failed to get file info: %v", err)
+			return nil, err
 		}
 
-		log.Println("Check: file path:", path)
+		log.Printf("Check: file info: %s", path)
 
 		// ディレクトリはスキップ
-		if info.IsDir() && path != p.BaseDirectory {
-			log.Println("Skip: directory:", path)
-			return filepath.SkipDir
+		if info.IsDir() && path != currentDir {
+			log.Printf("Skip: directory: %s", path)
+			continue
 		}
 
-		// テンプレートファイル, markdown以外のファイルはスキップ
-		if path == p.TemplateFile || filepath.Ext(path) != ".md" {
-			log.Println("Skip: not markdown file:", path)
-			return nil
+		filename := filepath.Base(path)
+
+		// template.md はスキップする
+		if filename == "template.md" {
+			log.Printf("Skip: Template file: %s", path)
+			continue
+		}
+
+		// Markdownファイル以外はスキップ
+		if filepath.Ext(path) != ".md" {
+			log.Printf("Skip: Not markdown file: %s", path)
+			continue
+		}
+
+		// カレントディレクトリのプレフィックスで始まらない場合はスキップ
+		if !strings.HasPrefix(filename, currentDirName) {
+			log.Printf("Skip: Not start with current directory name: %s", path)
+			continue
 		}
 
 		// ファイルの読み込み
 		file, err := os.Open(path)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer file.Close()
 
@@ -215,131 +142,24 @@ func (p *ArchiveCmd) getTargetFiles() ([]targetFile, error) {
 
 		// メタデータが取得できない場合はスキップ
 		if err != nil {
-			log.Println("Skip: failed to get metadata:", path)
-			return nil
+			log.Printf("Skip: Failed to get metadata: %v", err)
+			continue
 		}
 
-		if metadata.Title == p.Name && strings.HasPrefix(metadata.Date, p.TargetYM) {
+		// 対象年月のファイルのみを抽出
+		if strings.HasPrefix(metadata.Date, p.TargetYM) {
 			log.Println("Target:", path)
-			targetDirPaths = append(targetDirPaths, targetFile{path: path, info: info})
+			targetDirPaths = append(
+				targetDirPaths,
+				targetFile{
+					path: path,
+					info: info,
+				},
+			)
 		} else {
-			log.Println("Skip: not target file:", path)
+			log.Printf("Skip: Not target YearMonth: %s", path)
 		}
-
-		return nil
-	})
+	}
 
 	return targetDirPaths, err
-}
-
-func (p *ArchiveCmd) getTargetAssetFiles() ([]targetFile, error) {
-	var targetDirPaths []targetFile
-
-	// 対象年月の開始日時
-	startYMD, err := time.Parse("2006-01", p.TargetYM)
-	if err != nil {
-		return nil, err
-	}
-	startYMD = startYMD.AddDate(0, 0, 1)
-	// 対象年月の終了日時
-	endYMD := startYMD.AddDate(0, 1, -1)
-
-	assetDirPath := filepath.Join(p.BaseDirectory, "assets")
-	err = filepath.Walk(assetDirPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if path != assetDirPath && info.ModTime().After(startYMD) && info.ModTime().Before(endYMD) {
-			targetDirPaths = append(targetDirPaths, targetFile{path: path, info: info})
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return targetDirPaths, nil
-}
-
-// ベースディレクトリ以下に `archive` ディレクトリが存在しない場合は作成する
-func (p *ArchiveCmd) complateArchiveDir() (string, error) {
-	archiveDirPath := filepath.Join(p.BaseDirectory, "archive", p.TargetYM)
-	_, err := os.Stat(archiveDirPath)
-	if err != nil {
-		err = os.MkdirAll(archiveDirPath, 0755)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return archiveDirPath, nil
-}
-
-func (p *ArchiveCmd) complateArchiveAssetDir() (string, error) {
-	archiveDirPath := filepath.Join(p.BaseDirectory, "archive", p.TargetYM, "assets")
-	_, err := os.Stat(archiveDirPath)
-	if err != nil {
-		err = os.MkdirAll(archiveDirPath, 0755)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return archiveDirPath, nil
-}
-
-func generateTOC(content string) (string, error) {
-	md := goldmark.New(
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
-	)
-
-	reader := text.NewReader([]byte(content))
-	doc := md.Parser().Parse(reader)
-
-	var toc strings.Builder
-
-	err := ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-		if !entering {
-			return ast.WalkContinue, nil
-		}
-
-		if heading, ok := n.(*ast.Heading); ok {
-			var headingText string
-
-			ast.Walk(heading, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-				if entering {
-					if text, ok := n.(*ast.Text); ok {
-						headingText += string(text.Segment.Value(reader.Source()))
-					}
-				}
-				return ast.WalkContinue, nil
-			})
-
-			toc.WriteString(fmt.Sprintf("%s- %s\n", strings.Repeat("  ", heading.Level-1), headingText))
-		}
-
-		return ast.WalkContinue, nil
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return toc.String(), nil
-}
-
-func addIntent(text string, spaces int) string {
-	indent := strings.Repeat(" ", spaces)
-	lines := strings.Split(text, "\n")
-
-	for i, line := range lines {
-		lines[i] = indent + line
-	}
-
-	return strings.Join(lines, "\n")
 }

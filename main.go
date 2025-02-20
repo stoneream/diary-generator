@@ -3,9 +3,9 @@ package main
 import (
 	"diary-generator/cmd/archive"
 	"diary-generator/cmd/initialize"
-	"diary-generator/config"
 	"log"
 	"os"
+	"time"
 
 	"github.com/urfave/cli/v2"
 )
@@ -14,29 +14,15 @@ func main() {
 	app := &cli.App{
 		Name:  "diary-generator",
 		Usage: "",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "config",
-				Usage:    "config file path",
-				Required: true,
-			},
-		},
+		Flags: []cli.Flag{},
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
 				Aliases: []string{"i"},
 				Usage:   "Initialize a diary",
 				Action: func(c *cli.Context) error {
-					config, err := config.LoadFile(c.String("config"))
-
-					if err != nil {
-						return err
-					}
-
 					cmd := initialize.InitializeCmd{
-						BaseDirectory: config.BaseDirectory,
-						TemplateFile:  config.TemplateFile,
-						Name:          config.Name,
+						Now: time.Now(),
 					}
 					return cmd.Execute()
 				},
@@ -53,20 +39,10 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					config, err := config.LoadFile(c.String("config"))
-
-					if err != nil {
-						return err
-					}
-
 					targetYM := c.String("target-ym")
 
 					cmd := archive.ArchiveCmd{
-						BaseDirectory:         config.BaseDirectory,
-						Name:                  config.Name,
-						TargetYM:              targetYM,
-						TemplateFile:          config.TemplateFile,
-						EnabledArchiveSummary: config.EnabledArchiveSummary,
+						TargetYM: targetYM,
 					}
 
 					return cmd.Execute()

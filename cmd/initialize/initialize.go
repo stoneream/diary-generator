@@ -1,100 +1,108 @@
 package initialize
 
 import (
-	"diary-generator/data"
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
-	"text/template"
+	"strings"
 	"time"
 )
 
 type InitializeCmd struct {
-	BaseDirectory string
-	TemplateFile  string
-	Name          string
+	Now time.Time
 }
 
 func (p *InitializeCmd) Execute() error {
-	now := time.Now()
-	ymdNow := now.Format("2006-01-02")
-	targetFileName := fmt.Sprintf("%s_%s.md", p.Name, ymdNow) // e.g. diary_2024-01-01.md
-	targetFilePath := filepath.Join(p.BaseDirectory, targetFileName)
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 
-	// アセットディレクトリの存在チェック & 作成
-	assetDir := filepath.Join(p.BaseDirectory, "assets")
-	if _, err := os.Stat(assetDir); os.IsNotExist(err) {
-		err := os.Mkdir(assetDir, 0755)
+	currentDirName := filepath.Base(currentDir)
+
+	// ファイル名を生成
+	// e.g. diary_2024-01-01.md
+	ymdNow := p.Now.Format("2006-01-02")
+	targetFileName := fmt.Sprintf("%s_%s.md", currentDirName, ymdNow)
+
+	// ファイルの存在チェック
+	targetFilePath := filepath.Join(currentDir, targetFileName)
+	if _, err := os.Stat(targetFilePath); err == nil {
+		log.Fatalf("file already exists: %s", targetFilePath)
+		return err
+	}
+
+	// テンプレートファイルが存在するか？
+	templateFilePath := filepath.Join(currentDir, "template.md")
+	var templateText string
+
+	if _, err := os.Stat(templateFilePath); err != nil {
+		log.Printf("template file not found (%s)", templateFilePath)
+		templateText = ""
+	} else {
+		// テンプレートファイル読み込み
+		templateTextBytes, err := os.ReadFile(templateFilePath)
 		if err != nil {
-			log.Println("Error: failed to create asset directory:", err)
+			log.Fatalf("failed to read template file: %v", err)
 			return err
 		}
+		templateText = string(templateTextBytes)
 	}
 
-	// テンプレートファイルの存在チェック
-	_, err := os.Stat(p.TemplateFile)
+	text, err := p.templating(currentDirName, templateText)
 	if err != nil {
-		log.Println("Error: template file not found:", p.TemplateFile)
-		return err
+		log.Fatalf("failed to templating: %v", err)
 	}
 
-	// 生成しようとしているファイルが既に存在するかチェック
-	if _, err := os.Stat(targetFilePath); err == nil {
-		log.Println("Error: target file already exists:", targetFilePath)
-		return err
-	}
-
+	// ファイルを作成して書き込む
 	outputFile, err := os.Create(targetFilePath)
 	if err != nil {
-		log.Println("Error: failed to create target file:", err)
-		return err
+		log.Fatalf("failed to create file: %v", err)
 	}
+
 	defer outputFile.Close()
 
-	// メタデータ
-	metadata := data.Metadata{
-		Title: p.Name,
-		Date:  ymdNow,
-	}
-
-	metadataYaml, err := metadata.String()
+	_, err = outputFile.WriteString(text)
 	if err != nil {
-		log.Println("Error: failed to convert metadata to yaml:", err)
-		return err
+		log.Fatalf("failed to write file: %v", err)
 	}
 
-	// テンプレートファイル読み込み
-	input, err := os.ReadFile(p.TemplateFile)
-	if err != nil {
-		log.Println("Error: failed to read template file:", err)
-		return err
-	}
+	log.Printf("initialized successfully at %s", targetFilePath)
 
-	// 内容の埋込
+	return nil
+}
+
+func (p *InitializeCmd) templating(
+	current_dir_name string,
+	template_text string,
+) (string, error) {
 	data := map[string]interface{}{
-		"metadata": metadataYaml,
-		"content":  string(input),
+		"title":   current_dir_name,
+		"date":    p.Now.Format("2006-01-02"),
+		"content": string(template_text),
 	}
 
 	tmpl, err := template.New("").Parse(`---
-{{ .metadata }}
+title: "{{ .title }}"
+date: "{{ .date }}"
 ---
-{{ .content }}
-`)
+
+{{ .content }}`)
 
 	if err != nil {
-		log.Println("Error: failed to parse template:", err)
-		return err
+		log.Fatalf("failed to parse template: %v", err)
+		return "", err
 	}
 
-	err = tmpl.Execute(outputFile, data)
+	var buf strings.Builder
+	err = tmpl.Execute(&buf, data)
 
 	if err != nil {
-		log.Println("Error: failed to execute template:", err)
-		return err
+		log.Fatalf("failed to execute template: %v", err)
+		return "", err
 	}
 
-	log.Println("Diary initialized successfully at", targetFilePath)
-	return nil
+	return buf.String(), nil
 }
