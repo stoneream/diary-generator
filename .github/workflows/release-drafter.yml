@@ -25,21 +25,21 @@ jobs:
           go-version: "1.22.x"
       - name: Extract version from version.go
         id: extract_version
-        run: echo ::set-output name=version::$(grep -oP 'Version = "\K[^"]+' version.go)
+        run: echo "{version}= $(grep -oP 'Version = "\K[^"]+' version.go)" >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: go get .
       # Windows
       - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o diary-generator_windows_amd64/diary-generator.exe diary-generator .
+        run: GOOS=windows GOARCH=amd64 go build -o diary-generator_windows_amd64/diary-generator.exe .
       # MacOS (Intel)
       - name: Build for MacOS (Intel)
-        run: GOOS=darwin GOARCH=amd64 go build -o diary-generator_darwin_amd64/diary-generator diary-generator .
+        run: GOOS=darwin GOARCH=amd64 go build -o diary-generator_darwin_amd64/diary-generator .
       # MacOS (Apple Silicon)
       - name: Build for MacOS (Apple Silicon)
-        run: GOOS=darwin GOARCH=arm64 go build -o diary-generator_darwin_arm64/diary-generator diary-generator .
+        run: GOOS=darwin GOARCH=arm64 go build -o diary-generator_darwin_arm64/diary-generator .
       # Linux
       - name: Build for Linux
-        run: GOOS=linux GOARCH=amd64 go build -o diary-generator_linux_amd64/diary-generator diary-generator .
+        run: GOOS=linux GOARCH=amd64 go build -o diary-generator_linux_amd64/diary-generator .
       - name: Create Release Draft
         id: create_release_draft
         uses: softprops/action-gh-release@v2
