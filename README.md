@@ -3,8 +3,8 @@
 ## install
 
 ```bash
-TAG=x.y.z
-go install github.com/stoneream/diary-generator@$TAG
+TAG=2.y.z
+go install github.com/stoneream/diary-generator/v2@$TAG
 ```
 
 ## usage
