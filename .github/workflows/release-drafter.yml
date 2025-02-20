@@ -25,7 +25,7 @@ jobs:
           go-version: "1.22.x"
       - name: Extract version from version.go
         id: extract_version
-        run: echo "{version}=$(grep -oP 'Version = "\K[^"]+' version.go)" >> $GITHUB_OUTPUT
+        run: echo "version=$(grep -oP 'Version = "\K[^"]+' version.go)" >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: go get .
       # Windows
@@ -40,7 +40,16 @@ jobs:
       # Linux
       - name: Build for Linux
         run: GOOS=linux GOARCH=amd64 go build -o diary-generator_linux_amd64/diary-generator .
+      - name: Create Tag
+        if: steps.extract_version.outputs.version != ''
+        run: |
+          VERSION=${{ steps.extract_version.outputs.version }}
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
       - name: Create Release Draft
+        if: steps.extract_version.outputs.version != ''
         id: create_release_draft
         uses: softprops/action-gh-release@v2
         with:
@@ -55,6 +64,7 @@ jobs:
           zip -r diary-generator_darwin_arm64.zip diary-generator_darwin_arm64
           zip -r diary-generator_linux_amd64.zip diary-generator_linux_amd64
       - name: Upload Asset for Windows
+        if: steps.create_release_draft.outputs.upload_url != ''
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -64,6 +74,7 @@ jobs:
           overwrite: true # すでに存在する場合は上書き
           asset_content_type: application/zip
       - name: Upload Asset for MacOS (Intel)
+        if: steps.create_release_draft.outputs.upload_url != ''
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -73,6 +84,7 @@ jobs:
           overwrite: true # すでに存在する場合は上書き
           asset_content_type: application/zip
       - name: Upload Asset for MacOS (Apple Silicon)
+        if: steps.create_release_draft.outputs.upload_url != ''
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -81,6 +93,7 @@ jobs:
           asset_name: "diary-generator_darwin_arm64.zip"
           overwrite: true # すでに存在する場合は上書き
       - name: Upload Asset for Linux
+        if: steps.create_release_draft.outputs.upload_url != ''
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
