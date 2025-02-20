@@ -3,7 +3,7 @@
 ## install
 
 ```bash
-TAG=2.y.z
+TAG=v2.y.z
 go install github.com/stoneream/diary-generator/v2@$TAG
 ```
 
