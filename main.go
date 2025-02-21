@@ -14,9 +14,10 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:  "diary-generator",
-		Usage: "",
-		Flags: []cli.Flag{},
+		Name:    "diary-generator",
+		Usage:   "diary-generator [init | archive]",
+		Version: Version,
+		Flags:   []cli.Flag{},
 		Commands: []*cli.Command{
 			{
 				Name:    "init",
