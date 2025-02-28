@@ -7,6 +7,7 @@ import (
 
 	"github.com/stoneream/diary-generator/v2/cmd/archive"
 	"github.com/stoneream/diary-generator/v2/cmd/initialize"
+	"github.com/stoneream/diary-generator/v2/cmd/summary"
 
 	"github.com/urfave/cli/v2"
 )
@@ -45,6 +46,26 @@ func main() {
 
 					cmd := archive.ArchiveCmd{
 						TargetYM: targetYM,
+					}
+
+					return cmd.Execute()
+				},
+			},
+			{
+				Name:    "summary",
+				Aliases: []string{"s"},
+				Usage:   "Create a summary",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "target-prefix",
+						Usage: "target prefix (diary_, default: current directory name)",
+					},
+				},
+				Action: func(c *cli.Context) error {
+					targetPrefix := c.String("target-prefix")
+
+					cmd := summary.SummaryCmd{
+						TargetPrefixOpt: targetPrefix,
 					}
 
 					return cmd.Execute()

@@ -6,17 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/adrg/frontmatter"
 	"github.com/stoneream/diary-generator/v2/data"
+	"github.com/stoneream/diary-generator/v2/logic"
 )
 
 type ArchiveCmd struct {
 	TargetYM string
-}
-
-type targetFile struct {
-	path string
-	info os.FileInfo
 }
 
 func (p *ArchiveCmd) Execute() error {
@@ -26,9 +21,19 @@ func (p *ArchiveCmd) Execute() error {
 	}
 
 	// 対象ファイル(markdown)の抽出
-	targetFiles, err := p.getTargetMarkdownFiles()
+	currentDirName := filepath.Base(currentDir)
+	markdownFiles, err := logic.GetTargetMarkdownFiles(currentDirName)
 	if err != nil {
 		return err
+	}
+	// 対象日時で絞り込み
+	var targetFiles []data.TargetFile
+	for _, markdownFile := range markdownFiles {
+		if strings.HasPrefix(markdownFile.Metadata.Date, p.TargetYM) {
+			targetFiles = append(targetFiles, markdownFile)
+		} else {
+			log.Printf("Skip: Not target YearMonth: %s", markdownFile.Path)
+		}
 	}
 	if len(targetFiles) == 0 {
 		log.Println("No target files.")
@@ -46,8 +51,8 @@ func (p *ArchiveCmd) Execute() error {
 
 	for _, targetFile := range targetFiles {
 		// ファイルの移動
-		archiveFilePath := filepath.Join(archiveDirPath, filepath.Base(targetFile.path))
-		err = os.Rename(targetFile.path, archiveFilePath)
+		archiveFilePath := filepath.Join(archiveDirPath, filepath.Base(targetFile.Path))
+		err = os.Rename(targetFile.Path, archiveFilePath)
 		if err != nil {
 			log.Fatalf("failed to move file: %v", err)
 		}
@@ -75,91 +80,4 @@ func (p *ArchiveCmd) Execute() error {
 	}
 
 	return nil
-}
-
-func (p *ArchiveCmd) getTargetMarkdownFiles() ([]targetFile, error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("failed to get current directory: %v", err)
-		return nil, err
-	}
-
-	currentDirName := filepath.Base(currentDir)
-	var targetDirPaths []targetFile
-
-	entries, err := os.ReadDir(currentDir)
-	if err != nil {
-		log.Fatalf("failed to read directory: %v", err)
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		path := filepath.Join(currentDir, entry.Name())
-		info, err := entry.Info()
-		if err != nil {
-			log.Fatalf("failed to get file info: %v", err)
-			return nil, err
-		}
-
-		log.Printf("Check: file info: %s", path)
-
-		// ディレクトリはスキップ
-		if info.IsDir() && path != currentDir {
-			log.Printf("Skip: directory: %s", path)
-			continue
-		}
-
-		filename := filepath.Base(path)
-
-		// template.md はスキップする
-		if filename == "template.md" {
-			log.Printf("Skip: Template file: %s", path)
-			continue
-		}
-
-		// Markdownファイル以外はスキップ
-		if filepath.Ext(path) != ".md" {
-			log.Printf("Skip: Not markdown file: %s", path)
-			continue
-		}
-
-		// カレントディレクトリのプレフィックスで始まらない場合はスキップ
-		if !strings.HasPrefix(filename, currentDirName) {
-			log.Printf("Skip: Not start with current directory name: %s", path)
-			continue
-		}
-
-		// ファイルの読み込み
-		file, err := os.Open(path)
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-
-		// メタデータの取得
-		metadata := data.Metadata{}
-		_, err = frontmatter.Parse(file, &metadata)
-
-		// メタデータが取得できない場合はスキップ
-		if err != nil {
-			log.Printf("Skip: Failed to get metadata: %v", err)
-			continue
-		}
-
-		// 対象年月のファイルのみを抽出
-		if strings.HasPrefix(metadata.Date, p.TargetYM) {
-			log.Println("Target:", path)
-			targetDirPaths = append(
-				targetDirPaths,
-				targetFile{
-					path: path,
-					info: info,
-				},
-			)
-		} else {
-			log.Printf("Skip: Not target YearMonth: %s", path)
-		}
-	}
-
-	return targetDirPaths, err
 }
