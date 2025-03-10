@@ -3,7 +3,8 @@ module github.com/stoneream/diary-generator/v2
 go 1.22.4
 
 require (
-	github.com/urfave/cli/v2 v2.27.5
+	github.com/urfave/cli/v2 v2.27.6
+	github.com/yuin/goldmark v1.7.8
 	gopkg.in/yaml.v2 v2.4.0
 )
 
