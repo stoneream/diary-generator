@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/stoneream/diary-generator/v2/data"
 	"github.com/stoneream/diary-generator/v2/logic"
@@ -59,19 +60,8 @@ func (p *ArchiveCmd) Execute() error {
 	}
 
 	// フォルダの移動 (assets)
-	// assets フォルダの存在チェック
 	assetsDirPath := filepath.Join(currentDir, "assets")
 	if _, err := os.Stat(assetsDirPath); err == nil {
-		// 移動先ディレクトリの作成
-		archiveAssetDirPath := filepath.Join(archiveDirPath, "assets")
-		if _, err := os.Stat(archiveAssetDirPath); err != nil {
-			err = os.MkdirAll(archiveAssetDirPath, 0755)
-			if err != nil {
-				log.Fatalf("failed to create archive asset directory: %v", err)
-			}
-		}
-
-		//フォルダの移動
 		archiveAssetsDirPath := filepath.Join(archiveDirPath, "assets")
 		err = os.Rename(assetsDirPath, archiveAssetsDirPath)
 		if err != nil {
@@ -79,5 +69,67 @@ func (p *ArchiveCmd) Execute() error {
 		}
 	}
 
+	// サマリーファイルの作成
+	err = createSummaryFile(targetFiles, archiveDirPath)
+	if err != nil {
+		log.Fatalf("failed to create summary file: %v", err)
+	}
+
+	return nil
+}
+
+func createSummaryFile(targetFiles []data.TargetFile, archiveDirPath string) error {
+	// 目次の抽出
+	var markdownWithTOCs []logic.MarkdownWithTOC
+	for _, targetFile := range targetFiles {
+		// アーカイブディレクトリ内の移動後のパスを計算
+		archiveFilePath := filepath.Join(archiveDirPath, filepath.Base(targetFile.Path))
+
+		content, err := os.ReadFile(archiveFilePath)
+		if err != nil {
+			return err
+		}
+
+		headings, err := logic.ExtractHeadingsFromBytes(content)
+		if err != nil {
+			return err
+		}
+
+		markdownWithTOCs = append(markdownWithTOCs, logic.MarkdownWithTOC{
+			TargetFile: data.TargetFile{
+				Path:     archiveFilePath,
+				Info:     targetFile.Info,
+				Metadata: targetFile.Metadata,
+			},
+			Headings: headings,
+		})
+	}
+
+	// サマリ行の生成
+	summaryLines, err := logic.GenerateSummaryContent(markdownWithTOCs, archiveDirPath)
+	if err != nil {
+		return err
+	}
+
+	// メタデータ
+	summaryMetadata := logic.SummaryMetadata{
+		Title:     "Summary",
+		CreatedAt: time.Now(),
+	}
+
+	// テンプレート
+	summaryText, err := logic.TemplatingSummary(summaryLines, summaryMetadata)
+	if err != nil {
+		return err
+	}
+
+	// サマリーファイルの作成
+	summaryFilePath := filepath.Join(archiveDirPath, "summary.md")
+	err = os.WriteFile(summaryFilePath, []byte(summaryText), 0644)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Summary file created: %s", summaryFilePath)
 	return nil
 }
