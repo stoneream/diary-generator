@@ -11,6 +11,7 @@ go install github.com/stoneream/diary-generator/v2@latest
 ```bash
 # ベースディレクトリの作成
 mkdir diary
+cd diary
 
 # テンプレートファイルの作成
 touch template.md
