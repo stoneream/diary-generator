@@ -6,12 +6,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22.x"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # https://github.com/actions/checkout/tree/v7.0.1
+      - name: Setup mise
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # https://github.com/jdx/mise-action/tree/v5.2.2
       - name: Install dependencies
-        run: go get .
+        run: mise run deps
       - name: Build
-        run: go build -v .
+        run: mise run build
